@@ -68,7 +68,7 @@
                     <Button Margin="10,0" Name="btn_TargetDirPath" Click="btn_TargetDirPath_Click">选择文件夹</Button>
                 </StackPanel>
                 <StackPanel   Orientation="Horizontal">
-                    <TextBlock FontSize="16" FontWeight="Bold">3. 填写列分隔符</TextBlock>
+                    <TextBlock FontSize="16" FontWeight="Bold">3. 填写列分隔符或按正则匹配</TextBlock>
                 </StackPanel>
                 <StackPanel  Orientation="Horizontal" >
                     <Label FontWeight="Bold" Width="80">列分隔符</Label>
@@ -76,6 +76,11 @@
                     <Label FontWeight="Bold" Width="200">Excel索引列(从1开始,不填则不加)</Label>
                     <TextBox Width="100" Name="txt_IndexColumnName"></TextBox>
                     <Button Margin="10,0" Name="btn_ConvertFile" Click="btn_ConvertFile_Click" >检测并转换为Excel</Button>
+                </StackPanel>
+                <StackPanel  Orientation="Horizontal" >
+                    <Label FontWeight="Bold" Width="80">正则表达式</Label>
+                    <TextBox Width="360" Name="txt_RegexpStr"></TextBox>
+                    <Button Margin="10,0" Name="btn_MatchText" Click="btn_MatchText_Click" >逐行匹配字符并转换为Excel</Button>
                 </StackPanel>
                 <StackPanel  Orientation="Horizontal" Margin="0,10">
                     <Label FontWeight="Bold" Width="80">结果</Label>

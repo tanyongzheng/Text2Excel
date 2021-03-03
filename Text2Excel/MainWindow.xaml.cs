@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -172,5 +173,126 @@ namespace Text2Excel
             reader.Dispose();
         }
 
+        private async void btn_MatchText_Click(object sender, RoutedEventArgs e)
+        {
+
+            string sourceFilePath = txt_SourceFilePath.Text;
+            if (string.IsNullOrEmpty(sourceFilePath))
+            {
+                MessageBox.Show("请选择要转换的文件！");
+                return;
+            }
+            string targetDire = txt_TargetDirPath.Text;
+            if (string.IsNullOrEmpty(targetDire))
+            {
+                MessageBox.Show("请选择目标文件夹！");
+                return;
+            }
+
+            if (!File.Exists(sourceFilePath))
+            {
+                MessageBox.Show("转换的源文件不存在！");
+                return;
+            }
+            if (!Directory.Exists(targetDire))
+            {
+                MessageBox.Show("目标文件夹不存在！");
+                return;
+            }
+            var regexpStr = this.txt_RegexpStr.Text;
+            if (string.IsNullOrEmpty(regexpStr))
+            {
+                MessageBox.Show("正则表达式不能为空！");
+                return;
+            }
+            loadingBar.IsOpen = true;
+            txt_Msg.Text = "";
+            dataTable = new DataTable();
+            var regexList = new List<Regex>()
+            {
+                new Regex(regexpStr)
+            };
+            var rowList = GetRegexpFileRows(sourceFilePath,regexList);
+            await foreach (var row in rowList)
+            {
+
+            }
+            var indexColumnName = txt_IndexColumnName.Text;
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                if (!string.IsNullOrEmpty(indexColumnName))
+                {
+                    dataTable.Columns.Add(indexColumnName, typeof(int));
+                    for (var i = 0; i < dataTable.Rows.Count; i++)
+                    {
+                        dataTable.Rows[i][indexColumnName] = i + 1;
+                    }
+                }
+            }
+            txt_Msg.Text = $"总共{dataTable.Rows.Count}行";
+            var excelFileName = System.IO.Path.GetFileNameWithoutExtension(sourceFilePath) + ".xlsx";
+            var saveExcelPath = targetDire + "\\" + excelFileName;
+            //var exportFileInfo =
+            await Task.Run(async () =>
+            {
+                var exporter = new ExcelExporter();
+                await exporter.Export(saveExcelPath, dataTable);
+                MessageBox.Show("转换成功！");
+            });
+            loadingBar.IsOpen = false;
+        }
+
+
+        private async IAsyncEnumerable<DataRow> GetRegexpFileRows(string filePath,List<Regex> regexList)
+        {
+            StreamReader reader = File.OpenText(filePath);
+            var index = 0;
+            // var columnCount = 0;
+            var columnNames = new List<string>();
+            for (var i=0;i< regexList.Count;i++)
+            {
+                var columnName = "匹配字符" + i;
+                columnNames.Add(columnName);
+                dataTable.Columns.Add(columnName, typeof(string));
+            }
+            while (true)
+            {
+                var currentStr = await reader.ReadLineAsync();
+                if (string.IsNullOrEmpty(currentStr))
+                {
+                    txt_Msg.Text = $"第{index+1}行字为空！";
+                    break;
+                }
+
+                var lineStrArray = new List<string>();
+                for (var i = 0; i < regexList.Count; i++)
+                {
+                    var regex = regexList[i];
+                    var mathResult = regex.Match(currentStr);
+                    if (!mathResult.Success)
+                    {
+                        txt_Msg.Text = $"第{index + 1}行没有匹配的字符串！";
+                        lineStrArray.Add("");
+                    }
+                    else
+                    {
+                        lineStrArray.Add(mathResult.Value);
+                    }
+                }
+                
+
+                var dataRow = dataTable.NewRow();
+                for (var i = 0; i < columnNames.Count; i++)
+                {
+                    var columnName = columnNames[i];
+                    dataRow[columnName] = lineStrArray[i];
+                }
+                dataTable.Rows.Add(dataRow);
+                index++;
+                yield return dataRow;
+            }
+            reader.Close();
+            reader.Dispose();
+        }
     }
 }
