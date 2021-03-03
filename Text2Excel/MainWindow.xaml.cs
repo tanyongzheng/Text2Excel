@@ -106,7 +106,7 @@ namespace Text2Excel
                 //var exportFileInfo =
                 await Task.Run(async () =>
                 {
-                    IExporter exporter = new ExcelExporter();
+                    var exporter = new ExcelExporter();
                     await exporter.Export(saveExcelPath, dataTable);
                     MessageBox.Show("转换成功！");
                 });
